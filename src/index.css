@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+@import './styles/tokens.css';
+@import './styles/responsive.css';
+@import './styles/motion.css';
+@import './styles/theme-dark.css';
+
+@theme {
+  --font-sans:
+    'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  /* Fonds profonds (inspirés de la référence casino) */
+  --color-night: #07060d;
+  --color-night-soft: #0e0a18;
+
+  /* Accent acide : CTA principal */
+  --color-acid-300: #d9ff5c;
+  --color-acid-400: #c8ff00;
+  --color-acid-500: #b4e600;
+  --color-acid-600: #9ccc00;
+
+  /* Minage GPU : graphite + vert NVIDIA */
+  --color-graphite: #0d0f13;
+  --color-graphite-soft: #14171d;
+  --color-gpu-50: rgba(118, 185, 0, 0.12);
+  --color-gpu-100: rgba(118, 185, 0, 0.22);
+  --color-gpu-300: #a8e000;
+  --color-gpu-400: #8fcc00;
+  --color-gpu-500: #76b900;
+  --color-gpu-600: #5d9300;
+
+  /* Violet de marque, réglé pour fond sombre */
+  --color-brand-50: rgba(168, 85, 247, 0.14);
+  --color-brand-100: rgba(168, 85, 247, 0.24);
+  --color-brand-200: rgba(168, 85, 247, 0.36);
+  --color-brand-300: #c084fc;
+  --color-brand-400: #a855f7;
+  --color-brand-500: #9333ea;
+  --color-brand-600: #a855f7;
+  --color-brand-700: #c084fc;
+  --color-brand-800: #d8b4fe;
+  --color-brand-900: #e9d5ff;
+  --color-brand-950: #f3e8ff;
+
+  /* Échelle slate inversée : le thème est sombre par défaut */
+  --color-slate-50: #0a0712;
+  --color-slate-100: #131020;
+  --color-slate-200: #262036;
+  --color-slate-300: #3a3350;
+  --color-slate-400: #6b6585;
+  --color-slate-500: #8f89a6;
+  --color-slate-600: #b3adc7;
+  --color-slate-700: #cdc8dc;
+  --color-slate-800: #e0dcea;
+  --color-slate-900: #f3f0fa;
+  --color-slate-950: #ffffff;
+
+  /* Accents lisibles sur fond sombre */
+  --color-emerald-50: rgba(52, 211, 153, 0.12);
+  --color-emerald-100: rgba(52, 211, 153, 0.2);
+  --color-emerald-500: #34d399;
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-rose-50: rgba(251, 113, 133, 0.12);
+  --color-rose-100: rgba(251, 113, 133, 0.22);
+  --color-rose-500: #fb7185;
+  --color-rose-600: #fb7185;
+  --color-rose-700: #fda4af;
+  --color-rose-800: #fecdd3;
+  --color-amber-50: rgba(251, 191, 36, 0.12);
+  --color-amber-100: rgba(251, 191, 36, 0.22);
+  --color-amber-600: #fbbf24;
+  --color-amber-700: #fcd34d;
+  --color-sky-50: rgba(56, 189, 248, 0.12);
+  --color-sky-100: rgba(56, 189, 248, 0.22);
+  --color-sky-600: #38bdf8;
+  --color-sky-700: #7dd3fc;
+}

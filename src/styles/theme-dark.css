@@ -1,0 +1,33 @@
+/* ==========================================================================
+   Thème sombre — surfaces
+   --------------------------------------------------------------------------
+   L'échelle slate est inversée dans index.css : les classes existantes
+   (bg-slate-50, text-slate-900, border-slate-200…) rendent déjà sombre.
+   Ce fichier ne corrige que les fonds blancs explicites.
+   ========================================================================== */
+
+.bg-white {
+  background-color: var(--color-slate-100);
+}
+
+.bg-white\/60 {
+  background-color: color-mix(in srgb, var(--color-slate-100) 60%, transparent);
+}
+
+.bg-white\/80 {
+  background-color: color-mix(in srgb, var(--color-slate-100) 80%, transparent);
+}
+
+.bg-white\/90 {
+  background-color: color-mix(in srgb, var(--color-slate-100) 90%, transparent);
+}
+
+.bg-white\/95 {
+  background-color: color-mix(in srgb, var(--color-slate-100) 95%, transparent);
+}
+
+/* États de survol qui reposaient sur du blanc. */
+.hover\:bg-white:hover,
+.group:hover .group-hover\:bg-white {
+  background-color: var(--color-slate-200);
+}

@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Motion — micro-animations partagées
+   --------------------------------------------------------------------------
+   Volontairement courtes et sobres. `prefers-reduced-motion` est déjà
+   neutralisé dans responsive.css (durées ramenées à 0.01ms).
+   ========================================================================== */
+
+@keyframes babi-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes babi-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes babi-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes babi-flash-up {
+  0% {
+    background-color: rgba(16, 185, 129, 0.18);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes babi-flash-down {
+  0% {
+    background-color: rgba(244, 63, 94, 0.18);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes babi-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes babi-glow {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes babi-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.anim-fade-up {
+  animation: babi-fade-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-fade-in {
+  animation: babi-fade-in 0.3s ease-out both;
+}
+
+.anim-pop {
+  animation: babi-pop 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-flash-up {
+  animation: babi-flash-up 0.7s ease-out;
+}
+
+.anim-flash-down {
+  animation: babi-flash-down 0.7s ease-out;
+}
+
+.anim-shake {
+  animation: babi-shake 0.5s ease-in-out;
+}
+
+.anim-glow {
+  animation: babi-glow 2.2s ease-in-out infinite;
+}
+
+.anim-float {
+  animation: babi-float 3.2s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Minage GPU
+   -------------------------------------------------------------------------- */
+
+@keyframes babi-fan-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes babi-led-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes babi-maintenance-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes babi-coin-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(1.05);
+  }
+}
+
+.gpu-fan {
+  animation: babi-fan-spin 1.6s linear infinite;
+}
+
+.gpu-led {
+  animation: babi-led-pulse 1.8s ease-in-out infinite;
+}
+
+.maint-blink {
+  animation: babi-maintenance-pulse 1.2s ease-in-out infinite;
+}
+
+.anim-coin {
+  animation: babi-coin-rise 1.5s ease-out forwards;
+}
+
+/* Préférence utilisateur « Réduire les animations » (page Paramètres). */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

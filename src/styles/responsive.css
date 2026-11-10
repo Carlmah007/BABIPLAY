@@ -1,0 +1,65 @@
+/* Garde-fous responsive et accessibilité */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* Les grilles et flex ne doivent jamais élargir la page sur mobile. */
+main,
+main * {
+  min-width: 0;
+}
+
+/* Tableaux et graphiques larges : défilement interne, jamais la page entière. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-scroll > table {
+  min-width: 640px;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+@media (max-width: 380px) {
+  .page-compact {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
