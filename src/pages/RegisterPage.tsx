@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from '../app/router'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, readHashQuery, useNavigate } from '../app/router'
 import { authStore } from '../stores/authStore'
 import { toUserMessage, ValidationError } from '../lib/errors'
 import {
@@ -23,6 +23,14 @@ export function RegisterPage() {
   const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [referralCode] = useState(() => readHashQuery().get('ref') ?? undefined)
+
+  // Nettoie l'URL : on garde le paramètre en mémoire, pas à l'écran.
+  useEffect(() => {
+    if (referralCode && window.location.hash.includes('?ref=')) {
+      window.history.replaceState(null, '', `${window.location.pathname}#/register`)
+    }
+  }, [referralCode])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -35,7 +43,12 @@ export function RegisterPage() {
         throw new ValidationError('Les deux mots de passe ne correspondent pas.')
       }
       setLoading(true)
-      await authStore.register({ displayName: name, email: validEmail, password })
+      await authStore.register({
+        displayName: name,
+        email: validEmail,
+        password,
+        referredByCode: referralCode,
+      })
       navigate('/dashboard')
     } catch (cause) {
       setError(toUserMessage(cause))
@@ -58,9 +71,13 @@ export function RegisterPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-8">
         <Card className="w-full max-w-md">
           <div className="mb-5 text-center">
-            <Badge tone="brand" dot>
-              Compte sécurisé
-            </Badge>
+            {referralCode ? (
+              <Badge tone="success" dot>
+                Invitation d'un parrain
+              </Badge>
+            ) : (
+              <Badge tone="brand" dot>Compte sécurisé</Badge>
+            )}
             <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
               Créer un compte
             </h1>

@@ -9,6 +9,8 @@ import {
   validateEmail,
   validatePassword,
 } from '../lib/validation'
+import { roleEmailService as defaultRoleEmails, createRoleEmailService } from './roleEmailService'
+import { referralService as defaultReferrals, createReferralService } from './referralService'
 import type { AccountStatus, AppUser, RegisterInput, Role, Session } from '../types/auth'
 
 const USERS_KEY = 'auth:users'
@@ -22,6 +24,8 @@ interface StoredAccount extends AppUser {
 export interface AuthServiceOptions {
   storage?: StorageAdapter
   now?: () => string
+  roleEmails?: typeof defaultRoleEmails
+  referrals?: typeof defaultReferrals
 }
 
 export interface AuthService {
@@ -167,6 +171,10 @@ function toPublicUser(account: StoredAccount): AppUser {
 export function createAuthService(options: AuthServiceOptions = {}): AuthService {
   const adapter = options.storage ?? defaultStorage
   const now = options.now ?? nowIso
+  const roleEmails = options.roleEmails ??
+    (options.storage ? createRoleEmailService({ storage: adapter }) : defaultRoleEmails)
+  const referrals = options.referrals ??
+    (options.storage ? createReferralService({ storage: adapter, now }) : defaultReferrals)
   const listeners = new Set<() => void>()
 
   const emit = () => listeners.forEach((listener) => listener())
@@ -220,11 +228,13 @@ export function createAuthService(options: AuthServiceOptions = {}): AuthService
 
     const salt = randomSalt()
     const passwordHash = await derivePasswordHash(input.password, salt)
+    // Attribution de rôle par e-mail (table gérée par le Super Admin).
+    const assignedRole = roleEmails.roleForEmail(email)
     const account: StoredAccount = {
       id: createId('usr'),
       email,
       displayName,
-      role: 'player',
+      role: assignedRole ?? 'player',
       status: 'active',
       demo: false,
       createdAt: now(),
@@ -233,6 +243,17 @@ export function createAuthService(options: AuthServiceOptions = {}): AuthService
     }
 
     saveAccounts([...accounts, account])
+    // Pré-enregistre les codes de parrainage des comptes administrateurs.
+    for (const candidate of loadAccounts()) {
+      if (candidate.role === 'admin' || candidate.role === 'super_admin') {
+        try {
+          referrals.ensureSponsor(toPublicUser(candidate))
+        } catch {
+          // Un admin sans code n'empêche jamais l'inscription.
+        }
+      }
+    }
+    referrals.recordIfCode(input.referredByCode, toPublicUser(account))
     emit()
     return sessionFor(account)
   }

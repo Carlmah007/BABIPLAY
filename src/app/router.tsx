@@ -5,7 +5,16 @@ function readPath(): string {
   if (typeof window === 'undefined') return '/'
   const raw = window.location.hash.replace(/^#/, '')
   if (!raw) return '/'
-  return raw.startsWith('/') ? raw : `/${raw}`
+  const path = raw.split('?')[0]
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+/** Lit les paramètres passés dans le hash (ex. #/register?ref=xxx). */
+export function readHashQuery(): URLSearchParams {
+  if (typeof window === 'undefined') return new URLSearchParams()
+  const raw = window.location.hash.replace(/^#/, '')
+  const queryIndex = raw.indexOf('?')
+  return new URLSearchParams(queryIndex >= 0 ? raw.slice(queryIndex + 1) : '')
 }
 
 const pathStore = createStore(readPath())

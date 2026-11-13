@@ -16,6 +16,7 @@ import {
   markCrashed,
   multiplierAt,
   verifyCrashPoint,
+  AVIATOR_RULES,
 } from '../features/aviator/engine'
 import {
   createGameRandomnessService,
@@ -29,6 +30,10 @@ import {
   type GameSettlementService,
   type SettlementResult,
 } from './gameSettlementService'
+import {
+  gameBoostService as defaultBoosts,
+  type GameBoostService,
+} from './gameBoostService'
 import {
   createWalletService,
   walletService as defaultWallet,
@@ -49,6 +54,7 @@ export interface AviatorServiceOptions {
   wallet?: WalletService
   settlement?: GameSettlementService
   randomness?: GameRandomnessService
+  boosts?: GameBoostService
 }
 
 export interface AviatorCashout {
@@ -158,6 +164,7 @@ export function createAviatorService(options: AviatorServiceOptions = {}): Aviat
     (options.storage || options.random || options.now
       ? createGameRandomnessService({ storage: adapter, random: options.random, now })
       : defaultRandomness)
+  const boosts = options.boosts ?? defaultBoosts
   const listeners = new Set<() => void>()
 
   const emit = () => listeners.forEach((listener) => listener())
@@ -266,9 +273,28 @@ export function createAviatorService(options: AviatorServiceOptions = {}): Aviat
       draw: randomness.drawSequence(secret.roundId),
     })
 
+    // Boost programmé : la cote est forcée pendant la fenêtre horaire et le
+    // gain plafonné. La manche est marquée `boosted` : la vérification
+    // provably fair ne s'applique pas à elle (le résultat n'est pas tiré).
+    const boost = boosts.activeBoost('aviator', startedAt)
+    let boostedRound = generated
+    if (boost) {
+      const forced = Math.min(
+        AVIATOR_RULES.maxMultiplier,
+        Math.max(1.01, Math.floor(boost.forcedMultiplier * 100) / 100),
+      )
+      const growthRate = generated.growthRate
+      boostedRound = {
+        ...generated,
+        crashPoint: forced,
+        crashElapsedMs: Math.ceil((Math.log(forced) / growthRate) * 1000),
+        boosted: { multiplier: forced, maxWin: boost.maxWin, label: boost.label },
+      }
+    }
+
     // Machine d'état explicite : created → started → running.
-    saveRound(generated)
-    const started = freezeRound({ ...generated, status: 'started' })
+    saveRound(boostedRound)
+    const started = freezeRound({ ...boostedRound, status: 'started' })
     saveRound(started)
 
     wallet.debit({
@@ -277,12 +303,13 @@ export function createAviatorService(options: AviatorServiceOptions = {}): Aviat
       amount: stake,
       currency: wallet.currency,
       source: 'aviator',
-      reference: `aviator:stake:${generated.roundId}`,
-      idempotencyKey: `aviator:stake:${generated.roundId}`,
+      reference: `aviator:stake:${boostedRound.roundId}`,
+      idempotencyKey: `aviator:stake:${boostedRound.roundId}`,
       metadata: {
-        roundId: generated.roundId,
-        serverSeedHash: generated.serverSeedHash,
-        nonce: generated.nonce,
+        roundId: boostedRound.roundId,
+        serverSeedHash: boostedRound.serverSeedHash,
+        nonce: boostedRound.nonce,
+        boosted: boost ? boost.label : null,
         demo: true,
       },
     })
@@ -354,13 +381,17 @@ export function createAviatorService(options: AviatorServiceOptions = {}): Aviat
     }
 
     const computed = computeCashout(round, elapsedMs)
+    // Plafond de gain pendant une manche boostée.
+    const cappedPayout = round.boosted
+      ? Math.min(computed.payout, round.boosted.maxWin)
+      : computed.payout
     const cashedOut = markCashedOut(round, computed.multiplier, at)
     const result = settlement.settle({
       game: 'aviator',
       roundId,
       userId,
       stake: round.stake,
-      payout: computed.payout,
+      payout: cappedPayout,
       outcome: 'cashout',
       settledAt: at,
       metadata: {
@@ -368,6 +399,7 @@ export function createAviatorService(options: AviatorServiceOptions = {}): Aviat
         serverSeedHash: round.serverSeedHash,
         nonce: round.nonce,
         crashPoint: round.crashPoint,
+        boosted: round.boosted ? round.boosted.label : null,
       },
     })
     const finalRound = freezeRound({

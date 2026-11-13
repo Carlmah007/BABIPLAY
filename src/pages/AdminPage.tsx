@@ -9,6 +9,9 @@ import { authService } from '../services/authService'
 import { auditService } from '../services/auditService'
 import { paymentService, PAYMENT_RULES } from '../services/paymentService'
 import { walletService } from '../services/walletService'
+import { gameBoostService, type GameBoost } from '../services/gameBoostService'
+import { referralService } from '../services/referralService'
+import { roleEmailService } from '../services/roleEmailService'
 import { authStore } from '../stores/authStore'
 import {
   assignableRoles,
@@ -31,6 +34,8 @@ const ROLE_LABELS: Record<Role, string> = {
   super_admin: 'Super Admin',
 }
 
+const ROLE_EMAIL_ROLES: readonly Role[] = ['moderator', 'admin', 'super_admin']
+
 export function AdminPage() {
   const session = authStore.useSession()
   const user = session?.user ?? null
@@ -49,10 +54,37 @@ export function AdminPage() {
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // Affiliation
+  const [myReferrals, setMyReferrals] = useState(() =>
+    user && (user.role === 'admin' || user.role === 'super_admin')
+      ? referralService.listFor(user.id)
+      : [],
+  )
+  const [allReferrals, setAllReferrals] = useState<ReturnType<typeof referralService.listAll>>([])
+  const [referralCopied, setReferralCopied] = useState(false)
+
+  // Rôles par email (Super Admin)
+  const [roleEmails, setRoleEmails] = useState(() => roleEmailService.list())
+  const [roleEmailInput, setRoleEmailInput] = useState('')
+  const [roleEmailRole, setRoleEmailRole] = useState<Role>('moderator')
+  const [roleEmailNotice, setRoleEmailNotice] = useState<string | null>(null)
+
+  // Boosts programmés (Aviator)
+  const [boosts, setBoosts] = useState<GameBoost[]>(() => gameBoostService.list())
+  const [boostTime, setBoostTime] = useState('01:37')
+  const [boostMultiplier, setBoostMultiplier] = useState('36')
+  const [boostMaxWin, setBoostMaxWin] = useState('50000')
+  const [boostLabel, setBoostLabel] = useState('Boost Aviator')
+  const [boostNotice, setBoostNotice] = useState<string | null>(null)
+
   const refresh = () => {
     setUsers(authService.listUsers())
     setAudits(auditService.list())
     setPendingPayments(paymentService.listPendingWithdrawals())
+    setMyReferrals(user ? referralService.listFor(user.id) : [])
+    setAllReferrals(referralService.listAll())
+    setRoleEmails(roleEmailService.list())
+    setBoosts(gameBoostService.list())
   }
 
   useEffect(() => {
@@ -184,6 +216,70 @@ export function AdminPage() {
       setPaymentError(toUserMessage(caught))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const handleAddRoleEmail = () => {
+    setRoleEmailNotice(null)
+    try {
+      roleEmailService.set(roleEmailInput, roleEmailRole)
+      setRoleEmailInput('')
+      setRoleEmailNotice(`Rôle attribué : ${roleEmailInput} → ${ROLE_LABELS[roleEmailRole]}.`)
+      refresh()
+    } catch (caught) {
+      setRoleEmailNotice(toUserMessage(caught))
+    }
+  }
+
+  const handleRemoveRoleEmail = (email: string) => {
+    setRoleEmailNotice(null)
+    roleEmailService.remove(email)
+    refresh()
+  }
+
+  const handleAddBoost = () => {
+    setBoostNotice(null)
+    try {
+      gameBoostService.add({
+        label: boostLabel,
+        game: 'aviator',
+        timeOfDay: boostTime,
+        forcedMultiplier: Number(boostMultiplier),
+        maxWin: Number(boostMaxWin),
+      })
+      setBoostNotice('Boost programmé et activé.')
+      refresh()
+    } catch (caught) {
+      setBoostNotice(toUserMessage(caught))
+    }
+  }
+
+  const handleToggleBoost = (id: string) => {
+    setBoostNotice(null)
+    try {
+      const updated = gameBoostService.toggle(id)
+      setBoostNotice(updated.enabled ? 'Boost activé.' : 'Boost désactivé.')
+      refresh()
+    } catch (caught) {
+      setBoostNotice(toUserMessage(caught))
+    }
+  }
+
+  const handleRemoveBoost = (id: string) => {
+    setBoostNotice(null)
+    gameBoostService.remove(id)
+    refresh()
+  }
+
+  const handleCopyReferralLink = async () => {
+    if (!user) return
+    const code = referralService.ensureSponsor(user)
+    try {
+      await navigator.clipboard.writeText(referralService.linkFor(code))
+      setReferralCopied(true)
+      setTimeout(() => setReferralCopied(false), 2000)
+    } catch {
+      setReferralCopied(false)
     }
   }
 
@@ -414,6 +510,183 @@ export function AdminPage() {
           </div>
         )}
       </Card>
+
+      {canManageRoles(user) ? (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <Card padded={false}>
+            <div className="p-5 pb-0 sm:p-6 sm:pb-0">
+              <CardHeader
+                title="Rôles par e-mail"
+                description="Une adresse listée ici reçoit son rôle dès l'inscription."
+                action={<Badge tone="neutral">{roleEmails.length} règle(s)</Badge>}
+              />
+            </div>
+            <div className="space-y-3 p-5 sm:p-6">
+              <div className="grid gap-2 sm:grid-cols-[1.4fr_1fr_auto]">
+                <input
+                  type="email"
+                  placeholder="admin@exemple.com"
+                  value={roleEmailInput}
+                  onChange={(event) => setRoleEmailInput(event.target.value)}
+                  className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                />
+                <select
+                  value={roleEmailRole}
+                  onChange={(event) => setRoleEmailRole(event.target.value as Role)}
+                  className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-brand-400 focus:outline-none"
+                >
+                  {ROLE_EMAIL_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {ROLE_LABELS[role]}
+                    </option>
+                  ))}
+                </select>
+                <Button size="sm" onClick={handleAddRoleEmail}>
+                  Ajouter
+                </Button>
+              </div>
+              {roleEmailNotice && <p className="text-xs text-slate-500">{roleEmailNotice}</p>}
+              {roleEmails.length === 0 ? (
+                <p className="text-xs text-slate-400">Aucune règle. Tous les inscrits sont joueurs.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                  {roleEmails.map((entry) => (
+                    <li key={entry.email} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-900">{entry.email}</p>
+                        <p className="text-xs text-slate-500">→ {ROLE_LABELS[entry.role]}</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => handleRemoveRoleEmail(entry.email)}>
+                        Retirer
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Card>
+
+          <Card padded={false}>
+            <div className="p-5 pb-0 sm:p-6 sm:pb-0">
+              <CardHeader
+                title="Boosts Aviator programmés"
+                description="Pendant la fenêtre, la cote est forcée et le gain plafonné. La vérification provably fair est désactivée sur ces manches."
+              />
+            </div>
+            <div className="space-y-3 p-5 sm:p-6">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <TextField
+                  label="Libellé"
+                  value={boostLabel}
+                  onChange={(event) => setBoostLabel(event.target.value)}
+                />
+                <TextField
+                  label="Heure (HH:MM)"
+                  type="time"
+                  value={boostTime}
+                  onChange={(event) => setBoostTime(event.target.value)}
+                />
+                <TextField
+                  label="Cote forcée"
+                  type="number"
+                  value={boostMultiplier}
+                  onChange={(event) => setBoostMultiplier(event.target.value)}
+                  hint="Ex. 36"
+                />
+                <TextField
+                  label="Plafond de gain (jetons)"
+                  type="number"
+                  value={boostMaxWin}
+                  onChange={(event) => setBoostMaxWin(event.target.value)}
+                  hint="Ex. 50000"
+                />
+              </div>
+              <Button size="sm" onClick={handleAddBoost}>
+                Programmer le boost
+              </Button>
+              {boostNotice && <p className="text-xs text-slate-500">{boostNotice}</p>}
+              {boosts.length === 0 ? (
+                <p className="text-xs text-slate-400">Aucun boost programmé.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                  {boosts.map((boost) => (
+                    <li key={boost.id} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900">
+                          {boost.label} · {boost.timeOfDay}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Cote {boost.forcedMultiplier}× · plafond {formatNumber(boost.maxWin)} ·{' '}
+                          ± {boost.windowMinutes} min
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1.5">
+                        <Button
+                          variant={boost.enabled ? 'success' : 'outline'}
+                          size="sm"
+                          onClick={() => handleToggleBoost(boost.id)}
+                        >
+                          {boost.enabled ? 'Activé' : 'Désactivé'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleRemoveBoost(boost.id)}>
+                          Supprimer
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Card>
+        </div>
+      ) : null}
+
+      {user.role === 'admin' || user.role === 'super_admin' ? (
+        <Card className="mt-6" padded={false}>
+          <div className="p-5 pb-0 sm:p-6 sm:pb-0">
+            <CardHeader
+              title="Affiliation"
+              description="Partagez votre lien : chaque inscription via ce lien est comptée pour votre équipe."
+            />
+          </div>
+          <div className="space-y-4 p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700">
+                {referralService.linkFor(referralService.ensureSponsor(user))}
+              </code>
+              <Button size="sm" onClick={handleCopyReferralLink}>
+                {referralCopied ? 'Copié ✓' : 'Copier le lien'}
+              </Button>
+            </div>
+            {allReferrals.length === 0 ? (
+              <EmptyState
+                icon="users"
+                title="Aucun filleul pour l'instant"
+                description="Les inscriptions via les liens d'affiliation apparaîtront ici."
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                {(user.role === 'super_admin' ? allReferrals : myReferrals).map((record) => (
+                  <li key={record.id} className="px-4 py-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900">{record.displayName}</p>
+                        <p className="truncate text-xs text-slate-500">{record.email}</p>
+                      </div>
+                      <div className="text-right text-xs text-slate-400">
+                        <p>{formatDateTime(record.createdAt)}</p>
+                        {user.role === 'super_admin' && (
+                          <p>Parrain : {record.adminEmail}</p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="mt-6" padded={false}>
         <div className="p-5 pb-0 sm:p-6 sm:pb-0">

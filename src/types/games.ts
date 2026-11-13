@@ -45,6 +45,8 @@ export interface AviatorRound extends RoundCommitment {
   pnl: number | null
   settledAt: string | null
   demo: true
+  /** Présent si la manche a été lancée pendant un boost programmé. */
+  boosted?: { multiplier: number; maxWin: number; label: string }
 }
 
 export type TicTacToeMark = 'X' | 'O'

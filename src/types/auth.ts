@@ -28,4 +28,6 @@ export interface RegisterInput {
   displayName: string
   email: string
   password: string
+  /** Code d'affiliation saisi via le lien de parrainage (optionnel). */
+  referredByCode?: string
 }
