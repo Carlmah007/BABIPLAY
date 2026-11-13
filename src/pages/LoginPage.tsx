@@ -132,6 +132,7 @@ export function LoginPage() {
                 placeholder="8 caractères minimum"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                showPasswordToggle
               />
               <Button
                 type="submit"

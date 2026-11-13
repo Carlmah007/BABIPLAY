@@ -31,6 +31,8 @@ export type IconName =
   | 'coins'
   | 'trophy'
   | 'activity'
+  | 'eye'
+  | 'eye-off'
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -209,6 +211,20 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   activity: <path d="M3 12h4l3 8 4-16 3 8h4" />,
+  eye: (
+    <>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  'eye-off': (
+    <>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.8 17.8 0 0 1-2.4 3.2" />
+      <path d="M6.4 6.4A16.5 16.5 0 0 0 2 12s3.5 7 10 7a9.9 9.9 0 0 0 4.2-.9" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    </>
+  ),
 }
 
 interface IconProps {

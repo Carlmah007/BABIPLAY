@@ -104,6 +104,7 @@ export function RegisterPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               hint="Au moins une lettre et un chiffre."
+              showPasswordToggle
             />
             <TextField
               label="Confirmer le mot de passe"
@@ -113,6 +114,7 @@ export function RegisterPage() {
               placeholder="Répétez le mot de passe"
               value={confirmation}
               onChange={(event) => setConfirmation(event.target.value)}
+              showPasswordToggle
             />
             <Button
               type="submit"
