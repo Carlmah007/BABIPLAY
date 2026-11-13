@@ -32,15 +32,17 @@ Fonctionnalités livrées au fil des paquets de développement :
 | Moteur Aviator + aléa vérifiable | Interface et service livrés |
 | Moteur de trading simulé multi-actifs | Interface et service livrés |
 | Tic-Tac-Toe (mise, cotes, IA Minimax, règlement) | Terminé |
+| Mining (machines, cycles, incidents, retraits de minage) | Terminé — service + interface + back-office admin |
 | Règlement commun idempotent + notifications + audit | Terminé |
 | Centre de notifications | Interface livrée |
 | Back-office multi-rôles (modérateur / admin / super admin) | Interface livrée — lecture pour modérateurs, actions selon permissions |
 | Dépôts et retraits de démonstration | Parcours complet livré — validation Super Admin |
 | Abstraction de paiement | Configuration prête — prestataire réel non branché |
 | Socle Supabase (schéma + RLS + client typé) | Auth Supabase branchée — RBAC et paiements serveur à porter |
+| Déploiement | En ligne sur Vercel — déploiement automatique depuis `main` |
 | Paiements réels | Bloqué — API officielle non fournie |
 
-Le détail à jour figure dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`SECURITY.md`](./SECURITY.md) et [`docs/GAME_ECONOMY.md`](./docs/GAME_ECONOMY.md).
+Le détail à jour figure dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`SECURITY.md`](./SECURITY.md), [`PAYMENTS.md`](./PAYMENTS.md) et [`docs/GAME_ECONOMY.md`](./docs/GAME_ECONOMY.md).
 
 ## Installation
 
@@ -158,7 +160,7 @@ Comparaison avec la logique bookmaker (Betclic / 1xBet), cotes et formules : [`d
 - Aucun secret réel dans le dépôt.
 - Les actions administratives sensibles sont journalisées dans un audit local.
 
-Voir [`SECURITY.md`](./SECURITY.md).
+Voir [`SECURITY.md`](./SECURITY.md) pour l'inventaire complet des mécanismes en place et des limites à lever avant l'ouverture publique.
 
 ## Limites connues
 
@@ -168,6 +170,8 @@ Voir [`SECURITY.md`](./SECURITY.md).
 - Les résultats affichés ne doivent jamais servir de base à de l'argent réel.
 - Les cotations de trading sont simulées et ne reflètent aucun marché réel.
 - Les dépôts/retraits sont des jetons virtuels : aucun prestataire de paiement n'est appelé (`PAYMENT_ENABLED=false`).
+- La persistance Supabase couvre l'authentification et les profils ; portefeuille, jeux et paiements restent dans le `localStorage` du navigateur.
+- Le SMTP de Supabase (mails de confirmation) est limité en plan gratuit : brancher un SMTP dédié (Resend ou équivalent) pour un envoi fiable.
 - Les permissions de l'interface sont une aide à l'usage ; la vérification serveur (RLS/Edge Functions) reste à faire.
 - Le schéma Supabase est prêt dans `supabase/migrations` mais pas encore appliqué ni connecté.
 - Aucun déploiement public n'a été effectué.

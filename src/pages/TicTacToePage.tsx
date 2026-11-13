@@ -38,18 +38,22 @@ export function TicTacToePage() {
   const [stake, setStake] = useState('100')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [syncedGame, setSyncedGame] = useState(game ?? null)
 
   useEffect(() => {
     if (userId) ticTacToeStore.setUser(userId)
   }, [userId])
 
   // Recharge les contrôles sur la partie active (ex. après un rafraîchissement).
-  useEffect(() => {
-    if (!game) return
-    setLevel(game.level)
-    setHumanMark(game.humanMark)
-    setStake(String(game.stake))
-  }, [game])
+  // Ajustement d'état pendant le rendu (pattern React) au lieu d'un effet.
+  if (game !== syncedGame) {
+    setSyncedGame(game)
+    if (game) {
+      setLevel(game.level)
+      setHumanMark(game.humanMark)
+      setStake(String(game.stake))
+    }
+  }
 
   const isPlaying = Boolean(game && game.status === 'playing')
   const parsedStake = Number(stake.replace(/\s/g, '').replace(',', '.'))

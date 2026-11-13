@@ -34,9 +34,11 @@ const ROLE_LABELS: Record<Role, string> = {
 export function AdminPage() {
   const session = authStore.useSession()
   const user = session?.user ?? null
-  const [users, setUsers] = useState<AppUser[]>([])
-  const [audits, setAudits] = useState(auditService.list())
-  const [pendingPayments, setPendingPayments] = useState<PaymentIntent[]>([])
+  const [users, setUsers] = useState<AppUser[]>(() => authService.listUsers())
+  const [audits, setAudits] = useState(() => auditService.list())
+  const [pendingPayments, setPendingPayments] = useState<PaymentIntent[]>(() =>
+    paymentService.listPendingWithdrawals(),
+  )
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [justification, setJustification] = useState('')
@@ -54,7 +56,6 @@ export function AdminPage() {
   }
 
   useEffect(() => {
-    refresh()
     const unsubscribe = authService.subscribe(refresh)
     const unsubscribeAudit = auditService.subscribe(refresh)
     const unsubscribePayments = paymentService.subscribe(refresh)

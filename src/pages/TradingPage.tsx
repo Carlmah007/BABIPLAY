@@ -106,6 +106,7 @@ export function TradingPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [histories, setHistories] = useState<Record<string, number[]>>({})
+  const [syncedQuotes, setSyncedQuotes] = useState(quotes)
 
   useEffect(() => {
     if (userId) tradingStore.setUser(userId)
@@ -113,7 +114,10 @@ export function TradingPage() {
     return () => window.clearInterval(interval)
   }, [userId])
 
-  useEffect(() => {
+  // Accumule l'historique des prix pendant le rendu (pattern React) au lieu
+  // d'un effet qui re-déclenche un rendu à chaque tick.
+  if (quotes !== syncedQuotes) {
+    setSyncedQuotes(quotes)
     setHistories((previous) => {
       let changed = false
       const next: Record<string, number[]> = { ...previous }
@@ -128,7 +132,7 @@ export function TradingPage() {
       }
       return changed ? next : previous
     })
-  }, [quotes])
+  }
 
   const selectedQuote = quotes.find((quote) => quote.symbol === selected)
   const chart = buildSeries(histories[selected] ?? [])

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { authStore } from '../stores/authStore'
 import { canAccessAdminPanel } from '../lib/permissions'
 import { AppShell } from '../components/layout/AppShell'
@@ -83,6 +83,16 @@ function RouteView({ route }: { route: AppRoute }) {
       </AppShell>
     )
   }
-  if (route.chrome === 'public') return <>{route.element}</>
-  return <AppShell>{route.element}</AppShell>
+  if (route.chrome === 'public') {
+    return (
+      <Suspense fallback={<LoadingState label="Chargement…" />}>
+        {route.element}
+      </Suspense>
+    )
+  }
+  return (
+    <AppShell>
+      <Suspense fallback={<LoadingState label="Chargement…" />}>{route.element}</Suspense>
+    </AppShell>
+  )
 }
